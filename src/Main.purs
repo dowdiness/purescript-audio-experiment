@@ -19,12 +19,12 @@ data Action = Increment | Decrement
 
 component =
   H.mkComponent
-    { initialState 5
+    { initialState
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
   where
-  initialState x = x
+  initialState _ = 0
 
   render state =
     HH.div_
