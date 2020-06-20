@@ -12,7 +12,8 @@ import Data.Number (fromString)
 import Effect (Effect)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (class MonadEffect)
-import Effect.Console (logShow)
+import Effect.Console (log)
+import Halogen as H
 import Halogen as H
 import Halogen.Aff (awaitBody, runHalogenAff)
 import Halogen.HTML as HH
@@ -39,8 +40,8 @@ type State =
 
 data Action
   =
-  -- Initialize
-  SetVolume String
+  Initialize
+  | SetVolume String
   | SetPanner String
   | SetPower
   | SetPlaying
@@ -106,19 +107,19 @@ render st =
 
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM State Action () o m Unit
 handleAction = case _ of
-  -- Initialize -> do
-  --   ctx <- newAudioContext
-  --   element <- H.getHTMLElementRef (H.RefLabel "audio")
-  --   case element of
-  --     Nothing ->
-  --       pure unit
-  --     Just el -> do
-  --       track <- createMediaElementSource ctx element
-  --       g <- createGain ctx
-  --       setValue 0.0 =<< gain g
-  --       connect track g
-  --       connect g =<< destination ctx
-  --       suspend ctx
+  Initialize -> do
+    ctx <- newAudioContext
+    element <- H.getHTMLElementRef (H.RefLabel "audio")
+    case element of
+      Nothing ->
+        H.liftEffect $ log "audio is not found."
+      Just el -> do
+        track <- createMediaElementSource ctx el
+        g <- createGain ctx
+        setValue 1.0 =<< gain g
+        connect track g
+        connect g =<< destination ctx
+        suspend ctx
 
   SetVolume volume -> do
     case fromString volume of
@@ -139,9 +140,3 @@ handleAction = case _ of
 
   SetPlaying -> do
     H.modify_ \st -> st { playing = not st.playing }
-  -- MakeRequest event -> do
-  --   H.liftEffect $ Event.preventDefault event
-  --   username <- H.gets _.username
-  --   H.modify_ _ { loading = true }
-  --   response <- H.liftAff $ AX.get AXRF.string ("https://api.github.com/users/" <> username)
-  --   H.modify_ _ { loading = false, result = map _.body (hush response) }
